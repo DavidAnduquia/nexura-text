@@ -6,9 +6,12 @@ USER root
 # Instala dependencias necesarias para construir el frontend
 RUN apk update && apk add --no-cache curl nodejs npm
 
-# --- INICIO DE LA MODIFICACIÓN ---
 # Copia nuestro archivo de configuración personalizado de PHP-FPM al contenedor
 COPY .docker/php-fpm.conf /etc/php82/php-fpm.d/zzz_custom.conf
+
+# --- INICIO DE LA MODIFICACIÓN ---
+# Copia nuestro archivo de configuración DNS personalizado
+COPY .docker/resolv.conf /etc/resolv.conf
 # --- FIN DE LA MODIFICACIÓN ---
 
 # Copia todos los archivos de la aplicación al contenedor

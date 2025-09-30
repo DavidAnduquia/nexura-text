@@ -6,6 +6,11 @@ USER root
 # Instala dependencias necesarias para construir el frontend
 RUN apk update && apk add --no-cache curl nodejs npm
 
+# --- INICIO DE LA MODIFICACIÓN ---
+# Copia nuestro archivo de configuración personalizado de PHP-FPM al contenedor
+COPY .docker/php-fpm.conf /etc/php82/php-fpm.d/zzz_custom.conf
+# --- FIN DE LA MODIFICACIÓN ---
+
 # Copia todos los archivos de la aplicación al contenedor
 COPY . /var/www/html
 
@@ -27,6 +32,3 @@ ENV WEBROOT /var/www/html/public
 ENV APP_ENV production
 ENV APP_DEBUG false
 ENV LOG_CHANNEL stderr
-
-# El CMD es heredado de la imagen base, que inicia Nginx y PHP-FPM.
-# No es necesario añadirlo.

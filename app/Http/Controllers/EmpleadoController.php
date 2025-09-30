@@ -7,7 +7,6 @@ use App\Models\Area;
 use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class EmpleadoController extends Controller
@@ -29,10 +28,6 @@ class EmpleadoController extends Controller
 
         $empleados = $query->get();
 
-        if ($request->wantsJson()) {
-            return response()->json($empleados);
-        }
-
         return Inertia::render('Empleados/Index', [
             'empleados' => $empleados,
             'filters' => $request->only(['search'])
@@ -47,6 +42,50 @@ class EmpleadoController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $messages = [
+            'nombre.required' => 'El nombre completo es requerido.',
+            'email.required' => 'El correo electrónico es requerido.',
+            'email.email' => 'El correo electrónico no es válido.',
+            'email.unique' => 'Este correo electrónico ya está en uso.',
+            'sexo.required' => 'Debe seleccionar un sexo.',
+            'area_id.required' => 'Debe seleccionar un área.',
+            'descripcion.required' => 'La descripción es requerida.',
+            'roles.required' => 'Debe seleccionar al menos un rol.',
+        ];
+
+        $validatedData = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => 'required|email|unique:empleados,email',
+            'sexo' => 'required|in:M,F',
+            'area_id' => 'required|exists:areas,id',
+            'descripcion' => 'required|string',
+            'roles' => 'required|array|min:1',
+        ], $messages);
+
+        try {
+            DB::beginTransaction();
+            $empleado = Empleado::create([
+                'nombre' => $validatedData['nombre'],
+                'email' => $validatedData['email'],
+                'sexo' => $validatedData['sexo'],
+                'area_id' => $validatedData['area_id'],
+                'boletin' => $request->boletin ? 1 : 0,
+                'descripcion' => $validatedData['descripcion'],
+            ]);
+
+            $empleado->roles()->attach($request->roles);
+            DB::commit();
+
+            return redirect()->route('empleados.index')->with('success', 'Empleado creado con éxito');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // En lugar de devolver un JSON, redirigimos con un error
+            return redirect()->back()->withErrors(['error' => 'Error al crear el empleado.'])->withInput();
+        }
+    }
+
     public function edit(Empleado $empleado)
     {
         $empleado->load('roles');
@@ -57,7 +96,7 @@ class EmpleadoController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function update(Request $request, Empleado $empleado)
     {
         $messages = [
             'nombre.required' => 'El nombre completo es requerido.',
@@ -87,61 +126,24 @@ class EmpleadoController extends Controller
 
             $empleado->roles()->sync($request->roles);
             DB::commit();
+
+            return redirect()->route('empleados.index')->with('success', 'Empleado actualizado con éxito');
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Error al actualizar el empleado', 'error' => $e->getMessage()], 500);
+            return redirect()->back()->withErrors(['error' => 'Error al actualizar el empleado.'])->withInput();
         }
     }
 
-    public function update(Request $request, Empleado $empleado)
-    {
-    $messages = [
-        'nombre.required' => 'El nombre completo es requerido.',
-        'sexo.required' => 'Debe seleccionar un sexo.',
-        'area_id.required' => 'Debe seleccionar un área.',
-        'descripcion.required' => 'La descripción es requerida.',
-        'roles.required' => 'Debe seleccionar al menos un rol.',
-    ];
-
-    $validatedData = $request->validate([
-        'nombre' => 'required|string|max:255',
-        'sexo' => 'required|in:M,F',
-        'area_id' => 'required|exists:areas,id',
-        'descripcion' => 'required|string',
-        'roles' => 'required|array|min:1',
-    ], $messages);
-
-    try {
-        DB::beginTransaction();
-        $empleado->update([
-            'nombre' => $validatedData['nombre'],
-            'sexo' => $validatedData['sexo'],
-            'area_id' => $validatedData['area_id'],
-            'boletin' => $request->boletin ? 1 : 0,
-            'descripcion' => $validatedData['descripcion'],
-        ]);
-
-        $empleado->roles()->sync($request->roles);
-        DB::commit();
-
-        return redirect()->route('empleados.index')->with('success', 'Empleado actualizado con éxito');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json(['message' => 'Error al actualizar el empleado', 'error' => $e->getMessage()], 500);
-    }
-}
-
-    public function destroy(string $id)
+    public function destroy(Empleado $empleado)
     {
         try {
-            $empleado = Empleado::findOrFail($id);
             $empleado->delete();
             return redirect()->route('empleados.index')->with('success', 'Empleado eliminado con éxito');
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error al eliminar el empleado', 'error' => $e->getMessage()], 500);
+            return redirect()->back()->withErrors(['error' => 'Error al eliminar el empleado.']);
         }
     }
-
+    
     public function getAreas()
     {
         return response()->json(Area::all());

@@ -1,0 +1,48 @@
+services:
+  # Servicio Web para la aplicación Laravel
+  - type: web
+    name: nexura-text-app # <--- Nombre de tu aplicación
+    env: php
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "php artisan serve --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: APP_URL
+        value: https://nexura-text-app.onrender.com # <--- Cambia esto a la URL que Render te dará
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromService:
+          type: psql
+          name: nexura-text-db # <--- Nombre de tu base de datos
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: psql
+          name: nexura-text-db
+          property: port
+      - key: DB_DATABASE
+        fromService:
+          type: psql
+          name: nexura-text-db
+          property: database
+      - key: DB_USERNAME
+        fromService:
+          type: psql
+          name: nexura-text-db
+          property: user
+      - key: DB_PASSWORD
+        fromService:
+          type: psql
+          name: nexura-text-db
+          property: password
+
+  # Servicio de Base de Datos PostgreSQL
+  - type: psql
+    name: nexura-text-db # <--- Nombre de tu base de datos
+    plan: free
+    postgresMajorVersion: 16

@@ -111,7 +111,7 @@ Para traducir los mensajes de validación al español, se añadieron mensajes pe
 2.  **Instalar dependencias**: `composer install` y `npm install`.
 3.  **Configurar el archivo `.env`**: Copiar `.env.example` a `.env` y configurar la base de datos.
 4.  **Generar la clave de la aplicación**: `php artisan key:generate`.
-5.  **Ejecutar las migraciones y los seeders**: `php artisan migrate --seed`.
+5.  **Ejecutar las migraciones y los seeders**: `php artisan migrate --seed && php artisan db:seed`.
 6.  **Iniciar los servidores**:
 
     En una terminal, para el backend de Laravel:

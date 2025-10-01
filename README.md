@@ -125,3 +125,6 @@ Para traducir los mensajes de validación al español, se añadieron mensajes pe
     ```
 
 7.  **Acceder a la aplicación**: Navegar a `http://127.0.0.1:8000`.
+Base de datos: postgres remota de digital ocean
+usuario: nexura@test.com
+contraseña: password
